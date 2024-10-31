@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    #vis.vega-embed {
+      width: 100%;
+      display: flex;
+    }
+
+    #vis.vega-embed details,
+    #vis.vega-embed details summary {
+      position: relative;
+    }
+  </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-lite@5.20.1"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+</head>
+<body>
+  <h2>Select a Date</h2>
+  <input type="date" id="datePicker" />
+  <button id="applyDate">Apply Date</button>
+
+  <div id="vis"></div>
+
+  <script>
+    (function(vegaEmbed) {
+      const initialDate = '2021-11-01'; // Set the initial date here
+
+      const initialSpec = {
+        "config": {
+          "view": {
+            "continuousWidth": 300,
+            "continuousHeight": 300
+          }
+        },
+        "data": {
+          "url": "https://raw.githubusercontent.com/AfonsoRCampos/SeePort_VI/refs/heads/main/data/container_throughput.csv"
+        },
+        "mark": {
+          "type": "bar"
+        },
+        "encoding": {
+          "color": {
+            "field": "In/Out",
+            "type": "nominal"
+          },
+          "x": {
+            "field": "Date",
+            "timeUnit": "hours",
+            "title": "Time",
+            "type": "temporal"
+          },
+          "y": {
+            "aggregate": "count",
+            "type": "quantitative"
+          }
+        },
+        "height": 400,
+        "transform": [],
+        "width": 800,
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.20.1.json"
+      };
+
+      const el = document.getElementById('vis');
+
+      // Set the date picker to the initial date
+      document.getElementById('datePicker').value = initialDate;
+
+      // Function to render the chart
+      function renderChart(selectedDate) {
+        const spec = { ...initialSpec }; // Clone the initial specification
+
+        // Reset the transform array to remove old filters
+        spec.transform = [];
+
+        // If a date is selected, update the filter
+        if (selectedDate) {
+          const date = new Date(selectedDate);
+          const day = date.getDate();
+          const month = date.getMonth() + 1; // Months are zero-indexed
+          const year = date.getFullYear();
+
+          // Set the transform filter
+          spec.transform.push({
+            "filter": `date(datum.Date) == ${day} && month(datum.Date) == ${month} && year(datum.Date) == ${year}`
+          });
+        }
+
+        vegaEmbed("#vis", spec, { mode: "vega-lite" })
+          .catch(error => showError(el, error));
+      }
+
+      // Error handling function
+      function showError(el, error){
+        el.innerHTML = ('<div style="color:red;">'
+                        + '<p>JavaScript Error: ' + error.message + '</p>'
+                        + "<p>This usually means there's a typo in your chart specification. "
+                        + "See the JavaScript console for the full traceback.</p>"
+                        + '</div>');
+        throw error;
+      }
+
+      // Initial render with predefined date filter
+      renderChart(initialDate);
+
+      // Event listener for the apply date button
+      document.getElementById('applyDate').addEventListener('click', function() {
+        const selectedDate = document.getElementById('datePicker').value;
+        renderChart(selectedDate); // Render the chart with the selected date
+      });
+    })(vegaEmbed);
+  </script>
+</body>
+</html>
